@@ -1,4 +1,5 @@
 #AES-128
+import random
 
 # Definição do S-box padrão do AES
 S_BOX = [
@@ -20,6 +21,7 @@ S_BOX = [
     0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
 ]
 
+
 # Definição do S-box inverso do AES
 INV_S_BOX = [
     0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,
@@ -40,6 +42,7 @@ INV_S_BOX = [
     0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d
 ]
 
+
 # Definição do Rcon para derivação de chaves
 RCON = [
     0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40,
@@ -48,12 +51,31 @@ RCON = [
     0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39,
 ]
 
-#Chave a ser derivada
-key = [0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,
-       0xab, 0xf7, 0xcf, 0x28, 0x1f, 0x18, 0x11, 0x39]
 
-plaintext = [0x32, 0x88, 0x31, 0xe0, 0x43, 0x5a, 0x31, 0x37,
-             0xf6, 0x30, 0x98, 0x07, 0x4f, 0x9a, 0x20, 0x8c]
+#Matriz de multiplicação para a MixColumns
+MIXCOLUNS = [
+    [0x02, 0x03, 0x01, 0x01],
+    [0x01, 0x02, 0x03, 0x01],
+    [0x01, 0x01, 0x02, 0x03],
+    [0x03, 0x01, 0x01, 0x02],
+]
+
+
+def keyGen():
+    keyConfirm = input('Você já tem uma chave pronta?[y/n]: ')
+    if keyConfirm == 'y':
+        #Saída exemplo: 123 34 255 0 199 56 78 190 255 123 45 67 89 1 234 56
+        key = list(map(int, input('Informe a chave de 16 bytes (separados por espaços): ').split()))
+    else:
+        key = [random.randint(0, 255) for _ in range(16)]
+
+    input(f'\nSua chave é[ENTER]: {[hex(byte) for byte in key]}')
+    return key
+
+
+def plainText():
+    return [0x32, 0x88, 0x31, 0xe0, 0x43, 0x5a, 0x31, 0x37, 0xf6, 0x30, 0x98, 0x07, 0x4f, 0x9a, 0x20, 0x8c]
+
 
 #Derivação da key em subkeys para as rodadas de cifração
 def keyExpasion(key):
@@ -71,49 +93,95 @@ def keyExpasion(key):
         if j % 16 == 0:
             last_bytes = last_bytes[1:] + last_bytes[:1]
             
-            last_bytes = [S_BOX[k] for k in last_bytes]
+            last_bytes = [S_BOX[b] for b in last_bytes]
 
             last_bytes[0] ^= RCON[j//16]
 
         for l in range(4):
             expanded_key[j + l] = expanded_key[j - 16 + l] ^ last_bytes[l]
 
-    hex_expandedKey = [hex(val) for val in expanded_key]
-    return hex_expandedKey
+    return expanded_key
 
 
+
+#Aplicação das chaves de rodada para cada bloco do state
 def addRoundKey(state, roundKey):
-    assert len(roundKey) == 16
+    for i in range(4):
+        for j in range(4):
+            state[i][j] ^= roundKey[i * 4 + j]
+    return state
 
-    for i in range(0, 16, 4):
-        matrix = [roundKey[i:i+4]]
 
-    return [
-        [byte ^ key_byte for byte, key_byte in zip(row, matrix[i])]
-          for i, row in enumerate(state)
-          ]
 
-def subBytes():
-    print('')
+#Percorre o state e substitui cada valor pelo correspondente em SBOX
+def subBytes(state):
+    for i in range(4):
+        for j in range(4):
+            state[i][j] = S_BOX[state[i][j]]
+    return state
 
-def shiftRows():
-    print('')
 
-def mixColumns():
-    print('')
+
+#Alteração da posição dos bytes nas linhas 1, 2 e 3 da matriz
+def shiftRows(state):
+    state[1] = state[1][1:] + state[1][:1]
+    state[2] = state[2][2:] + state[2][:2]
+    state[3] = state[3][3:] + state[3][:3]
+
+    return state
+
+
+
+# def mixColumns(state):
+#     newState = [[0] * 4 for _ in range(4)]
+
+#     for i in range(4):
+#         for j in range(4):
+#             newState[j][i] = 0
+#             for k in range(4):
+#                 newState[j][i] ^= gfMult(MIXCOLUNS[j][k], state[k][i])
+    
+#     return newState
+
+
 
 def encryptAES(plaintext, key):
-
-    rounds = 10
-
+    rounds = int(input('\nDigite a quantidade de rounds: '))
     expanded_key = keyExpasion(key)
-    for i in range(0, 16, 4):
-        state = [plaintext[i:i+4]]
 
+    state = [list(plaintext[i:i+4]) for i in range(0, 16, 4)]
     state = addRoundKey(state, expanded_key[:16])
-    print(state)
 
-ciphertext = encryptAES(plaintext, key)
+    for round in range(1, rounds):
+        state = subBytes(state)
+        state = shiftRows(state)
+        # state = mixColumns(state)
+        state = addRoundKey(state, expanded_key[round*16:(round+1)*16])
+        print('mix ', round, state)
+
+    state = subBytes(state)
+    state = shiftRows(state)
+    state = addRoundKey(state, expanded_key[round*16:(round+1)*16])
+
+    return [byte for row in state for byte in row]
+
+
 
 def decryptAES():
     print('')
+
+
+
+plaintext = plainText()
+key = keyGen()
+
+ciphertext = encryptAES(plaintext, key)
+decrypt = decryptAES()
+
+ciphertext = [f"{byte:02x}" for byte in ciphertext]
+ciphertext = ' '.join(ciphertext)
+
+print('\nPlaintext', plaintext)
+print('\nCiphertext', ciphertext)
+
+# print('\nDecrypt', decrypt)
