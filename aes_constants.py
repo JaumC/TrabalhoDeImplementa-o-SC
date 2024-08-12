@@ -1,6 +1,3 @@
-#AES-128
-import random
-
 # Definição do S-box padrão do AES
 S_BOX = [
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
@@ -61,127 +58,10 @@ MIXCOLUNS = [
 ]
 
 
-def keyGen():
-    keyConfirm = input('Você já tem uma chave pronta?[y/n]: ')
-    if keyConfirm == 'y':
-        #Saída exemplo: 123 34 255 0 199 56 78 190 255 123 45 67 89 1 234 56
-        key = list(map(int, input('Informe a chave de 16 bytes (separados por espaços): ').split()))
-    else:
-        key = [random.randint(0, 255) for _ in range(16)]
-
-    input(f'\nSua chave é[ENTER]: {[hex(byte) for byte in key]}')
-    return key
-
-
-def plainText():
-    return [0x32, 0x88, 0x31, 0xe0, 0x43, 0x5a, 0x31, 0x37, 0xf6, 0x30, 0x98, 0x07, 0x4f, 0x9a, 0x20, 0x8c]
-
-
-#Derivação da key em subkeys para as rodadas de cifração
-def keyExpasion(key):
-    expanded_key = [0] * 176
-
-    #Separa adciona as partes da chave de 16 em 16
-    for i in range(16):
-        expanded_key[i] = key[i]
-
-    #Começa do valor 17° ate o 176, saltando de 4 em 4
-    for j in range(16, 176, 4):
-        last_bytes = expanded_key[j-4:j]
-        
-        #Rotação e aplicação do SBOX
-        if j % 16 == 0:
-            last_bytes = last_bytes[1:] + last_bytes[:1]
-            
-            last_bytes = [S_BOX[b] for b in last_bytes]
-
-            last_bytes[0] ^= RCON[j//16]
-
-        for l in range(4):
-            expanded_key[j + l] = expanded_key[j - 16 + l] ^ last_bytes[l]
-
-    return expanded_key
-
-
-
-#Aplicação das chaves de rodada para cada bloco do state
-def addRoundKey(state, roundKey):
-    for i in range(4):
-        for j in range(4):
-            state[i][j] ^= roundKey[i * 4 + j]
-    return state
-
-
-
-#Percorre o state e substitui cada valor pelo correspondente em SBOX
-def subBytes(state):
-    for i in range(4):
-        for j in range(4):
-            state[i][j] = S_BOX[state[i][j]]
-    return state
-
-
-
-#Alteração da posição dos bytes nas linhas 1, 2 e 3 da matriz
-def shiftRows(state):
-    state[1] = state[1][1:] + state[1][:1]
-    state[2] = state[2][2:] + state[2][:2]
-    state[3] = state[3][3:] + state[3][:3]
-
-    return state
-
-
-
-# def mixColumns(state):
-#     newState = [[0] * 4 for _ in range(4)]
-
-#     for i in range(4):
-#         for j in range(4):
-#             newState[j][i] = 0
-#             for k in range(4):
-#                 newState[j][i] ^= gfMult(MIXCOLUNS[j][k], state[k][i])
-    
-#     return newState
-
-
-
-def encryptAES(plaintext, key):
-    rounds = int(input('\nDigite a quantidade de rounds: '))
-    expanded_key = keyExpasion(key)
-
-    state = [list(plaintext[i:i+4]) for i in range(0, 16, 4)]
-    state = addRoundKey(state, expanded_key[:16])
-
-    for round in range(1, rounds):
-        state = subBytes(state)
-        state = shiftRows(state)
-        # state = mixColumns(state)
-        state = addRoundKey(state, expanded_key[round*16:(round+1)*16])
-        print('mix ', round, state)
-
-    state = subBytes(state)
-    state = shiftRows(state)
-    state = addRoundKey(state, expanded_key[round*16:(round+1)*16])
-
-    return [byte for row in state for byte in row]
-
-
-
-def decryptAES():
-    print('')
-
-
-
-plaintext = plainText()
-key = keyGen()
-
-ciphertext = encryptAES(plaintext, key)
-decrypt = decryptAES()
-
-ciphertext = [f"{byte:02x}" for byte in ciphertext]
-ciphertext = ' '.join(ciphertext)
-
-print('\nPlaintext', plaintext)
-print('\nCiphertext', ciphertext)
-
-# print('\nDecrypt', decrypt)
+#Matriz inversa de multiplicação para a MixColumns
+INV_MIXCOLUNS = [
+    [0x0e, 0x0b, 0x0d, 0x09],
+    [0x09, 0x0e, 0x0b, 0x0d],
+    [0x0d, 0x09, 0x0e, 0x0b],
+    [0x0b, 0x0d, 0x09, 0x0e],
+]
