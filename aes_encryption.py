@@ -1,11 +1,8 @@
-from aes_constants import S_BOX, MIXCOLUNS
-from aes_utils import addRoundKey, gfMult, keyExpasion
-
-
-
+from aes_constants import S_BOX
+from aes_utils import addRoundKey, gmul, keyExpansion
 
 #Percorre o state e substitui cada valor pelo correspondente em SBOX
-def subBytes(state):
+def subBytes(state): #CHECKED
     for i in range(4):
         for j in range(4):
             state[i][j] = S_BOX[state[i][j]]
@@ -13,7 +10,7 @@ def subBytes(state):
 
 
 #Alteração da posição dos bytes nas linhas 1, 2 e 3 da matriz
-def shiftRows(state):
+def shiftRows(state): #CHECKED
     state[1] = state[1][1:] + state[1][:1]
     state[2] = state[2][2:] + state[2][:2]
     state[3] = state[3][3:] + state[3][:3]
@@ -25,33 +22,34 @@ def shiftRows(state):
 def mixColumns(state):
     newState = [[0] * 4 for _ in range(4)]
 
+    for c in range(4):
+        newState[0][c] = gmul(0x02, state[0][c]) ^ gmul(0x03, state[1][c]) ^ state[2][c] ^ state[3][c]
+        newState[1][c] = state[0][c] ^ gmul(0x02, state[1][c]) ^ gmul(0x03, state[2][c]) ^ state[3][c]
+        newState[2][c] = state[0][c] ^ state[1][c] ^ gmul(0x02, state[2][c]) ^ gmul(0x03, state[3][c])
+        newState[3][c] = gmul(0x03, state[0][c]) ^ state[1][c] ^ state[2][c] ^ gmul(0x02, state[3][c])
+
     for i in range(4):
         for j in range(4):
-            newState[j][i] = 0
-            for k in range(4):
-                newState[j][i] ^= gfMult(MIXCOLUNS[j][k], state[k][i])
-    
+            state[i][j] = newState[i][j]
+
     return newState
 
 
 def encryptAES(plaintext, key):
-    rounds = int(input('\nDigite a quantidade de rounds: '))
-    expanded_key = keyExpasion(key)
-    print('expanded', expanded_key)
-
-    state = [list(plaintext[i:i+4]) for i in range(0, 16, 4)]
+    rounds = int(input('Digite a quantidade de rounds[10, 12 ou 14]: '))
+    expanded_key = keyExpansion(key)
+    state = [plaintext[i:i+4] for i in range(0, len(plaintext), 4)] 
     state = addRoundKey(state, expanded_key[:16])
 
-    for round in range(1, rounds):
+
+    for round in range(rounds - 1):
         state = subBytes(state)
         state = shiftRows(state)
         state = mixColumns(state)
-        state = addRoundKey(state, expanded_key[round*16:(round+1)*16])
-        print('mix ', round, state)
+        state = addRoundKey(state, expanded_key[(round + 1) * 16:(round + 2) * 16])
 
     state = subBytes(state)
     state = shiftRows(state)
-    state = addRoundKey(state, expanded_key[round*16:])
+    state = addRoundKey(state, expanded_key[rounds * 16:])
 
-    ciphertext = [byte for row in state for byte in row]
-    return ciphertext, rounds
+    return state, rounds
