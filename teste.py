@@ -1,40 +1,54 @@
-from aes_decryption import invMixColumns
-from aes_encryption import mixColumns
+import hashlib
+import os
 
+def oaep_pad(msg, n):
+    k = (n.bit_length() + 7) // 8
+    l = hashlib.sha3_256(b'').digest()
+    hlen = len(l)
 
-def test_mix_invMixColumns():
-    # Matriz de estado original
-    original_state = [
-        [0x87, 0xf2, 0x4d, 0x97],
-        [0x6e, 0x4c, 0x90, 0xec],
-        [0x46, 0xe7, 0x4a, 0xc3],
-        [0xa6, 0x8c, 0xd8, 0x95]
-    ]
+    # Padding
+    ps = b'\x00' * (k - len(l) - len(msg) - 2)
+    db = ps + b'\x01' + msg
+    db_mask = os.urandom(len(db))  # Generate random mask for db
+    masked_db = bytes(x ^ y for x, y in zip(db, db_mask))
+    seed = os.urandom(hlen)  # Generate random seed
+    masked_seed = bytes(x ^ y for x, y in zip(seed, masked_db[:hlen]))
 
-    # Clonando o estado original para não alterar o original durante as operações
-    state = [row[:] for row in original_state]
+    return masked_seed + masked_db[hlen:], db_mask  # Return db_mask along with padded message
 
-    # Aplicando mixColumns
-    mixColumns(state)
+def oaep_unpad(padded, db_mask, n):
+    k = (n.bit_length() + 7) // 8
+    l = hashlib.sha3_256(b'').digest()
+    hlen = len(l)
 
-    # Matriz esperada após mixColumns
-    expected_after_mix = [
-        [0x47, 0x40, 0xa3, 0x4c],
-        [0x37, 0xd4, 0x70, 0x9f],
-        [0x94, 0xe4, 0x3a, 0x42],
-        [0xed, 0xa5, 0xa6, 0xbc]
-    ]
+    masked_seed = padded[:hlen]
+    masked_db = padded[hlen:]
+    seed = bytes(x ^ y for x, y in zip(masked_seed, db_mask[:hlen]))
+    db = bytes(x ^ y for x, y in zip(masked_db, db_mask[hlen:]))
 
-    # Verificando se a matriz após mixColumns corresponde à esperada
-    assert state == expected_after_mix, f"Erro no mixColumns. Resultado obtido: {state}"
+    # Remove padding
+    pos = db.find(b'\x01')
+    if pos == -1:
+        raise ValueError("Invalid padding")
+    return db[pos + 1:]
 
-    # Aplicando invMixColumns para tentar reverter ao estado original
-    invMixColumns(state)
+def test_oaep_padding():
+    # Parâmetros de teste
+    n = 0x01FFFF  # Exemplo de n (deve ser um número maior em uma aplicação real)
 
-    # Verificando se a matriz após invMixColumns volta ao estado original
-    assert state == original_state, f"Erro no invMixColumns. Resultado obtido: {state}"
+    # Mensagem de teste
+    message = b'Teste de mensagem para OAEP padding.'
 
-    print("Teste passado com sucesso: mixColumns e invMixColumns estão funcionando corretamente.")
+    # Executar padding
+    padded_message, db_mask = oaep_pad(message, n)
 
-# Chamando o teste
-test_mix_invMixColumns()
+    # Executar unpadding
+    try:
+        unpadded_message = oaep_unpad(padded_message, db_mask, n)
+        assert unpadded_message == message, "Test failed: the unpadded message does not match the original message."
+        print("Test passed: the unpadded message matches the original message.")
+    except ValueError as e:
+        print(f"Test failed: {e}")
+
+# Executar o teste
+test_oaep_padding()
