@@ -1,6 +1,6 @@
 # RSA Hash com OAEP
 
-from sympy import isprime, mod_inverse
+from sympy import mod_inverse
 import hashlib
 import random
 import base64
@@ -11,13 +11,44 @@ import os
 def calc_hash(msg):
     return hashlib.sha3_256(msg).digest()
 
+# Baseado em https://gist.github.com/KaiSmith/5886940
+def miller_rabin(n, k=100):
+    if n <= 1:
+        return False
+    if n <= 3:
+        return True
+    if n % 2 == 0:
+        return False
+    
+    d = n - 1
+    s = 0
+    while d % 2 == 0:
+        d //= 2
+        s += 1
+
+    for _ in range(k):
+        a = random.randint(2, n - 2)
+        x = pow(a, d, n)
+        if x == 1 or x == n - 1:
+            continue
+        possibly_prime = False
+        for _ in range(s - 1):
+            x = (x * x) % n
+            if x == n - 1:
+                possibly_prime = True
+                break
+        if not possibly_prime:
+            return False
+    return True
+
 
 # Geração de um número primo grande
 def largePrime(bits):
     while True:
         # Gera até encontrar um numero primo
         num = random.getrandbits(bits)
-        if isprime(num):
+        num |= (1 << (bits-1)) | 1
+        if miller_rabin(num):
             return num
 
 
