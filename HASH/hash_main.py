@@ -4,7 +4,6 @@ import random
 import base64
 import os
 
-
 def hash_message(msg):
     return hashlib.sha3_256(msg).digest()
 
@@ -109,15 +108,18 @@ def verifying(pubKEY, msg, signOn64):
 
 
 pubKey, privKey = genRSA(1024)
-print("Public Key:", pubKey)
-print("Private Key:", privKey)
+print("\nPublic Key:\n", pubKey)
+print()
+print("Private Key:\n", privKey)
+print()
 
 # Mensagem de teste
 message = 'Esta é uma mensagem secreta.'.encode('utf-8')
+print(message, '\n')
 
 # Assinatura da mensagem
 signature = signMSG(privKey, message)
-print(f"Signature: {signature}")
+print(f"Signature: {signature}\n")
 
 # Verificação da assinatura
 is_valid = verifying(pubKey, message, signature)
