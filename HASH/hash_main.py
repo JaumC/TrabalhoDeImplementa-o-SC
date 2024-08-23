@@ -1,24 +1,34 @@
+# RSA Hash com OAEP
+
 from sympy import isprime, mod_inverse
 import hashlib
 import random
 import base64
 import os
 
-def hash_message(msg):
+
+
+def calc_hash(msg):
     return hashlib.sha3_256(msg).digest()
 
+
+# Geração de um número primo grande
 def largePrime(bits):
     while True:
+        # Gera até encontrar um numero primo
         num = random.getrandbits(bits)
         if isprime(num):
             return num
-        
+
+
+# Criação da chave pública e privada
 def genRSA(bits=1024):
     p = largePrime(bits)
     q = largePrime(bits)
     n = p * q
     phi = (p-1) * (q - 1)
 
+    # Valor comum para RSA
     e = 65537
     d = mod_inverse(e, phi)
 
@@ -27,25 +37,36 @@ def genRSA(bits=1024):
 
     return pubKey, privKey
 
+
+# Criação da máscara para os dados
 def mgf1(seed, length, hash_func=hashlib.sha3_256):
     hlen = len(hash_func(b'').digest())
     output = b''
+    
     for i in range(0, (length + hlen - 1) // hlen):
+
+        # Geração de blocos das máscaras
         c = (i).to_bytes(4, byteorder='big')
         output += hash_func(seed + c).digest()
 
     return output[:length]
 
+
+# Aplicação do padding OAEP
 def oaep_pad(msg, n, hash_func=hashlib.sha3_256):
+    # Calcula o comprimento total de bytes necessários
     k = (n.bit_length() + 7) // 8
+
     l = hash_func(b'').digest()
     hlen = len(l)
 
+    # Padding string com bytes \x00
     ps = b'\x00' * (k - len(l) - len(msg) - 2 * hlen - 2)
     db = l + ps + b'\x01' + msg
 
     seed = os.urandom(hlen)
     
+    # Gerando seed
     db_mask = mgf1(seed, len(db), hash_func)
     masked_db = bytes(x ^ y for x, y in zip(db, db_mask))
     
@@ -54,14 +75,18 @@ def oaep_pad(msg, n, hash_func=hashlib.sha3_256):
 
     return masked_seed + masked_db
 
+
+# Remoção do padding OAEP
 def oaep_unpad(padded, n, hash_func=hashlib.sha3_256):
     k = (n.bit_length() + 7) // 8
     l = hash_func(b'').digest()
     hlen = len(l)
 
+    # Extração da seed
     masked_seed = padded[:hlen]
     masked_db = padded[hlen:]
 
+    # Revertendo a máscara
     seed_mask = mgf1(masked_db, hlen, hash_func)
     seed = bytes(x ^ y for x, y in zip(masked_seed, seed_mask))
 
@@ -79,32 +104,57 @@ def oaep_unpad(padded, n, hash_func=hashlib.sha3_256):
     
     return db[pos + 1:]
 
+
 def encryptRSA(pubKEY, plaintext):
     e, n = pubKEY
+
+    # Aplicação do oaep antes da cifração
     padded_plaintext = oaep_pad(plaintext, n)
     plaintextInt = int.from_bytes(padded_plaintext, byteorder='big')
+
     ciphertext = pow(plaintextInt, e, n)
     return ciphertext
 
+
 def decryptRSA(privKEY, ciphertext):
     d, n = privKEY
+
+    # Decifração do texto
     cipherInt = pow(ciphertext, d, n) 
     plaintext = cipherInt.to_bytes((cipherInt.bit_length() + 7) // 8, byteorder='big')
+
+    # Remoção do oaep padding
     return oaep_unpad(plaintext, n)
 
+
+# Assinatura de mensagem
 def signMSG(privKEY, msg):
-    hashMSG = hash_message(msg)
+    hashMSG = calc_hash(msg)
+
     signature = encryptRSA(privKEY, hashMSG)
     signature_bytes = signature.to_bytes((signature.bit_length() + 7) // 8, byteorder='big')
+
+    # Assinatura codificada em BASE64
     signOn64 = base64.b64encode(signature_bytes).decode('utf-8')
+
     return signOn64
 
+
+# Verificador de assinaturas
 def verifying(pubKEY, msg, signOn64):
+
+    # Decodificação da assinatura em BASE64
     signature = base64.b64decode(signOn64)
+
     cipherInt = int.from_bytes(signature, byteorder='big')
     decryptHASH = decryptRSA(pubKEY, cipherInt)
-    msgHASH = hash_message(msg)
+
+    msgHASH = calc_hash(msg)
+
+    # Deve retornar True se decrypt e msg coincidirem
     return decryptHASH == msgHASH
+
+
 
 
 pubKey, privKey = genRSA(1024)
