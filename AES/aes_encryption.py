@@ -1,5 +1,6 @@
+from functools import reduce
 from aes_constants import S_BOX
-from aes_utils import addRoundKey, gmul, keyExpansion
+from aes_utils import CTR, addRoundKey, gmul, keyExpansion
 
 #Percorre o state e substitui cada valor pelo correspondente em SBOX
 def subBytes(state): #CHECKED
@@ -35,21 +36,41 @@ def mixColumns(state):
     return newState
 
 
-def encryptAES(plaintext, key):
+def encryptAES(plaintext, key, nonce):
     rounds = int(input('Digite a quantidade de rounds[10, 12 ou 14]: '))
     expanded_key = keyExpansion(key)
-    state = [plaintext[i:i+4] for i in range(0, len(plaintext), 4)] 
-    state = addRoundKey(state, expanded_key[:16])
+    counter = nonce
 
+    blocks = [plaintext[i:i+16] for i in range(0, len(plaintext), 16)] 
 
-    for round in range(rounds - 1):
+    cipherBlocks = []
+
+    for block in blocks:
+        if len(block) < 16:
+            block = block + bytes(16-len(block))
+
+        state = [counter[i:i+4] for i in range(0, len(counter), 4)]            
+        state = addRoundKey(state, expanded_key[16:])
+
+        for round in range(rounds - 1):
+            state = subBytes(state)
+            state = shiftRows(state)
+            state = mixColumns(state)
+            state = addRoundKey(state, expanded_key[(round + 1) * 16:(round + 2) * 16])
+
         state = subBytes(state)
         state = shiftRows(state)
-        state = mixColumns(state)
-        state = addRoundKey(state, expanded_key[(round + 1) * 16:(round + 2) * 16])
+        state = addRoundKey(state, expanded_key[rounds * 16:])
 
-    state = subBytes(state)
-    state = shiftRows(state)
-    state = addRoundKey(state, expanded_key[rounds * 16:])
+        # Concatena as colunas em uma lista
+        encrypted_counter = reduce(lambda x, y: x + y, state)
 
-    return state, rounds
+        # XOR
+        cipherBlock = bytes([b ^ c for b, c in zip(block, encrypted_counter)])
+        cipherBlocks.append(cipherBlock)
+
+        counter = CTR(counter)
+
+    ciphertext = b''.join(cipherBlocks)
+
+    return ciphertext, rounds

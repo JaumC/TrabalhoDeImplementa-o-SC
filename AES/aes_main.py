@@ -1,4 +1,5 @@
-#AES-128
+# AES-128
+
 import random
 from Crypto.Util.Padding import pad
 from Crypto.Cipher import AES
@@ -29,18 +30,20 @@ def plainText():
 def main():
     plaintext = plainText()
     key = keyGen()
+    nonce = [0] * 16
     print('\nPlaintext:\n', to_hex_string(plaintext))
 
     loop = input('\nSelecione uma opção:\n1)Encriptar\n3)Sair\nR: ')
     while True:
 
         if loop == '1':
-            ciphertext, rounds = encryptAES(plaintext, key)
+            ciphertext, rounds = encryptAES(plaintext, key, nonce)
             print('Ciphertext:\n', to_hex_string(ciphertext))
             loop = input('\nSelecione uma opção:\n2)Decriptar\n3)Sair\nR: ')
             
         elif loop == '2':
-            decrypt = decryptAES(ciphertext, key, rounds)
+            decrypt = decryptAES(ciphertext, key, nonce, rounds)
+            # decrypt = unpad(decrypt, AES.block_size)
             print('Decrypt:\n', to_hex_string(decrypt))
             break
 

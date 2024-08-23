@@ -1,5 +1,15 @@
 from aes_constants import S_BOX, RCON
 
+
+def CTR(counter):
+    for i in reversed(range(len(counter))):
+        if counter[i] != 255:
+            counter[i] += 1
+            break
+        counter[i] = 0
+    return counter
+
+
 #Multiplicação de dois elementos no campo finito GF
 def gmul(a, b):
     p = 0
@@ -15,6 +25,7 @@ def gmul(a, b):
         b >>= 1
     
     return p & 0xFF
+
 
 #Derivação da key em subkeys para as rodadas de cifração
 def keyExpansion(key):

@@ -61,6 +61,7 @@ def genRSA(bits=1024):
 
     # Valor comum para RSA
     e = 65537
+
     d = mod_inverse(e, phi)
 
     pubKey = (e, n)
@@ -70,17 +71,17 @@ def genRSA(bits=1024):
 
 
 # Criação da máscara para os dados
-def mgf1(seed, length, hash_func=hashlib.sha3_256):
+def mgf1(seed, tam, hash_func=hashlib.sha3_256):
     hlen = len(hash_func(b'').digest())
     output = b''
     
-    for i in range(0, (length + hlen - 1) // hlen):
+    for i in range(0, (tam + hlen - 1) // hlen):
 
         # Geração de blocos das máscaras
         c = (i).to_bytes(4, byteorder='big')
         output += hash_func(seed + c).digest()
 
-    return output[:length]
+    return output[:tam]
 
 
 # Aplicação do padding OAEP

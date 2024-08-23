@@ -1,6 +1,9 @@
+from functools import reduce
 from aes_constants import INV_S_BOX
-from aes_utils import addRoundKey
+from aes_utils import CTR, addRoundKey
 from aes_utils import gmul, keyExpansion
+from Crypto.Util.Padding import unpad
+from Crypto.Cipher import AES
 
 #Percorre o state e substitui cada valor pelo correspondente em INV_SBOX
 def invSubBytes(state):
@@ -36,18 +39,38 @@ def invMixColumns(state):
     return newState
 
 
-def decryptAES(ciphertext, key, rounds=10):
+def decryptAES(ciphertext, key, nonce, rounds=10):
     expanded_key = keyExpansion(key)
-    state = addRoundKey(ciphertext, expanded_key[rounds * 16:])
 
-    for round in range(rounds - 1, 0, -1):
+    counter = nonce
+    cipherBlocks = [ciphertext[i:i+16] for i in range(0, len(ciphertext), 16)]
+
+    plaintextBlocks = []
+
+    for block in cipherBlocks:
+        if len(block) < 16:
+            block = block + bytes(16 - len(block))
+
+        state = [counter[i:i+4] for i in range(0, len(counter), 4)]
+        state = addRoundKey(state, expanded_key[rounds * 16:])
+
+        for round in range(rounds - 1, 0, -1):
+            state = invShiftRows(state)
+            state = invSubBytes(state)
+            state = addRoundKey(state, expanded_key[round * 16:(round + 1) * 16])
+            state = invMixColumns(state)
+
         state = invShiftRows(state)
         state = invSubBytes(state)
-        state = addRoundKey(state, expanded_key[round * 16:(round + 1) * 16])
-        state = invMixColumns(state)
+        state = addRoundKey(state, expanded_key[:16])
 
-    state = invShiftRows(state)
-    state = invSubBytes(state)
-    state = addRoundKey(state, expanded_key[:16])
+        # Concatena as colunas em uma lista
+        encrypted_counter = reduce(lambda x, y: x + y, state)
 
-    return state
+        plaintextBlock = bytes([b ^ c for b, c in zip(block, encrypted_counter)])
+        plaintextBlocks.append(plaintextBlock)
+
+        counter = CTR(counter)
+
+    plaintext = b''.join(plaintextBlocks)
+    return plaintext
