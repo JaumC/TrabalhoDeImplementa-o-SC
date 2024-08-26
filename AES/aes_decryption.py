@@ -73,4 +73,6 @@ def decryptAES(ciphertext, key, nonce, rounds=10):
         counter = CTR(counter)
 
     plaintext = b''.join(plaintextBlocks)
+    plaintext = unpad(plaintext, AES.block_size)
+    plaintext = plaintext.decode('utf-8')
     return plaintext

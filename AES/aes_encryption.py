@@ -1,6 +1,10 @@
 from functools import reduce
 from aes_constants import S_BOX
 from aes_utils import CTR, addRoundKey, gmul, keyExpansion
+from Crypto.Util.Padding import pad
+from Crypto.Cipher import AES
+
+
 
 #Percorre o state e substitui cada valor pelo correspondente em SBOX
 def subBytes(state): #CHECKED

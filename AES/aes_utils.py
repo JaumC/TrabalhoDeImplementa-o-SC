@@ -2,12 +2,19 @@ from aes_constants import S_BOX, RCON
 
 
 def CTR(counter):
-    for i in reversed(range(len(counter))):
-        if counter[i] != 255:
-            counter[i] += 1
+    # Converte bytes para uma lista de inteiros
+    counter_list = list(counter)
+    
+    # Incrementa o contador
+    for i in reversed(range(len(counter_list))):
+        if counter_list[i] != 255:
+            counter_list[i] += 1
             break
-        counter[i] = 0
-    return counter
+        counter_list[i] = 0
+    
+    # Converte a lista de volta para bytes
+    return bytes(counter_list)
+
 
 
 #Multiplicação de dois elementos no campo finito GF
@@ -54,10 +61,15 @@ def keyExpansion(key):
 
 #Aplicação das chaves de rodada para cada bloco do state
 def addRoundKey(state, roundKey):
+    # Converta o roundKey de bytes para uma lista de listas, se necessário
+    roundKey = [roundKey[i:i+4] for i in range(0, len(roundKey), 4)]
+
+    # Aplica a operação XOR em cada byte do estado
     for i in range(4):
         for j in range(4):
-            state[i][j] ^= roundKey[i * 4 + j]
+            state[i][j] ^= roundKey[i][j]
     return state
+
 
 
 def to_hex_string(data):

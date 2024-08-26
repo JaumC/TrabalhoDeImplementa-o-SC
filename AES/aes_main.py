@@ -1,8 +1,9 @@
 # AES-128
 
 import random
-from Crypto.Util.Padding import pad
 from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad
+
 from aes_encryption import encryptAES
 from aes_decryption import decryptAES
 from aes_utils import to_hex_string
@@ -43,7 +44,6 @@ def main():
             
         elif loop == '2':
             decrypt = decryptAES(ciphertext, key, nonce, rounds)
-            # decrypt = unpad(decrypt, AES.block_size)
             print('Decrypt:\n', to_hex_string(decrypt))
             break
 
