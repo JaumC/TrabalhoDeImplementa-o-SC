@@ -1,37 +1,36 @@
 from functools import reduce
-import random
 from aes_decryption import invMixColumns, invShiftRows, invSubBytes
 from aes_encryption import mixColumns, shiftRows, subBytes
-from aes_utils import CTR, addRoundKey, keyExpansion, to_hex_string
-from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad, unpad
+from aes_utils import CTR, addRoundKey, hex_string_to_bytes, keyExpansion
 
 def encryptAES(plaintext, key, nonce):
     rounds = int(input('Digite a quantidade de rounds[10, 12 ou 14]: '))
+
     expanded_key = keyExpansion(key)
+    
+    # Converter expanded_key em uma lista de listas (4x4) para cada rodada
+    expanded_key_4x4 = [list(expanded_key[i:i+16]) for i in range(0, len(expanded_key), 16)]
+
     counter = nonce
 
-    plaintext_padded = pad(bytes(plaintext, 'utf-8'), block_size=16)
-    print('\nPlaintext com padding:\n', to_hex_string(plaintext_padded))
-
-    blocks = [plaintext_padded[i:i+16] for i in range(0, len(plaintext_padded), 16)]
-    print('\nBlocos após divisão:\n', [to_hex_string(block) for block in blocks])
+    blocks = [plaintext[i:i+16] for i in range(0, len(plaintext), 16)]
 
     cipherBlocks = []
 
     for block in blocks:
         state = [list(block[i:i+4]) for i in range(0, len(block), 4)]
-        state = addRoundKey(state, expanded_key[16:])
 
-        for round in range(rounds - 1):
+        state = addRoundKey(state, expanded_key_4x4[0])
+
+        for round in range(1, rounds):
             state = subBytes(state)
             state = shiftRows(state)
             state = mixColumns(state)
-            state = addRoundKey(state, expanded_key[(round + 1) * 16:(round + 2) * 16])
+            state = addRoundKey(state, expanded_key_4x4[round])
 
         state = subBytes(state)
         state = shiftRows(state)
-        state = addRoundKey(state, expanded_key[rounds * 16:])
+        state = addRoundKey(state, expanded_key_4x4[rounds])
 
         encrypted_counter = bytes(reduce(lambda x, y: x + y, state))
 
@@ -41,15 +40,17 @@ def encryptAES(plaintext, key, nonce):
         counter = CTR(counter)
 
     ciphertext = b''.join(cipherBlocks)
-    print('\nTexto cifrado:\n', to_hex_string(ciphertext))
 
     return ciphertext, rounds
 
-
-
 def decryptAES(ciphertext, key, nonce, rounds=10):
     expanded_key = keyExpansion(key)
+
+    # Converter expanded_key em uma lista de listas (4x4) para cada rodada
+    expanded_key_4x4 = [list(expanded_key[i:i+16]) for i in range(0, len(expanded_key), 16)]
+
     counter = nonce
+
     cipherBlocks = [ciphertext[i:i+16] for i in range(0, len(ciphertext), 16)]
 
     plaintextBlocks = []
@@ -57,59 +58,39 @@ def decryptAES(ciphertext, key, nonce, rounds=10):
     for block in cipherBlocks:
         state = [list(block[i:i+4]) for i in range(0, len(block), 4)]
 
-        # Inicialização
-        state = addRoundKey(state, expanded_key[rounds * 16:])
+        state = addRoundKey(state, expanded_key_4x4[rounds])
 
-        # Rodadas intermediárias
-        for round in range(rounds - 1, 0, -1):
-            state = invShiftRows(state)
-            state = invSubBytes(state)
-            state = addRoundKey(state, expanded_key[round * 16:(round + 1) * 16])
-            state = invMixColumns(state)
-
-        # Última rodada
         state = invShiftRows(state)
         state = invSubBytes(state)
-        state = addRoundKey(state, expanded_key[:16])
 
-        # Cálculo do contador cifrado
+        for round in range(rounds - 1, 0, -1):
+            state = addRoundKey(state, expanded_key_4x4[round])
+            state = invMixColumns(state)
+            state = invShiftRows(state)
+            state = invSubBytes(state)
+
+        state = addRoundKey(state, expanded_key_4x4[0])
+
         encrypted_counter = bytes(reduce(lambda x, y: x + y, state))
 
-        # Descriptografia do bloco
         plaintextBlock = bytes([b ^ c for b, c in zip(block, encrypted_counter)])
+
         plaintextBlocks.append(plaintextBlock)
 
-        # Atualização do contador
         counter = CTR(counter)
 
     plaintext = b''.join(plaintextBlocks)
-    plaintext = unpad(plaintext, block_size=16)
-    plaintext = plaintext.decode('utf-8')
 
     return plaintext
 
+# Teste do código
+plaintext = "Hello, AES encryption and decryption!"
+key = [0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 
+       0xab, 0xf7, 0x97, 0x34, 0x66, 0x08, 0x51, 0xe0]
+nonce = b'\x00' * 16  
 
+ciphertext, rounds = encryptAES(plaintext.encode('utf-8'), key, nonce)
+print('\n\nCiphertext:', ciphertext, '\nRounds:', rounds)
 
-
-
-
-def test_aes_encryption_decryption():
-    key = b'This is a key123'  # Chave de 16 bytes (128 bits)
-    nonce = b'Nonce1234567890'  # Vetor de inicialização (IV) de 16 bytes (128 bits)
-    plaintext = 'Hello, AES encryption and decryption!'
-
-    print(f"Texto original:{plaintext}\n")
-
-    # Criptografar o texto
-    ciphertext, rounds = encryptAES(plaintext, key, nonce)
-    print(f'\nQuantidade de rounds utilizados: {rounds}')
-    
-    # Descriptografar o texto
-    decrypted_text = decryptAES(ciphertext, key, nonce, rounds)
-    print("\nTexto descriptografado:", decrypted_text)
-
-    # Verificar se o texto descriptografado corresponde ao texto original
-    assert decrypted_text == plaintext, "O texto descriptografado não corresponde ao texto original."
-
-# Execute o teste
-test_aes_encryption_decryption()
+decrypted = decryptAES(ciphertext, key, nonce, rounds)
+print('\nDecrypted Text:', decrypted.decode('utf-8'))
