@@ -52,27 +52,46 @@ def gmul(a, b):
 
 
 #Derivação da key em subkeys para as rodadas de cifração
-def keyExpansion(key):
-    expanded_key = [0] * 176
+def keyExpansion(key, rounds):
+    if rounds == 10:
+        key_size = 16
+        key_len = 176
+
+    elif rounds == 12:
+        key_size = 24
+        key_len = 208
+
+    elif rounds == 14:
+        key_size = 32
+        key_len = 240
+
+    else:
+        print('\nTamanho de rounds inválido, deve ser[10, 12, 14]')
+        return
+    
+    expanded_key = [0] * key_len
 
     # Separa e adiciona as partes da chave de 16 em 16
-    for i in range(16):
+    for i in range(key_size):
         expanded_key[i] = key[i]
 
     # Começa do valor 17° até o 176, saltando de 4 em 4
-    for j in range(16, 176, 4):
+    for j in range(key_size, key_len, 4):
         last_bytes = expanded_key[j-4:j]
         
         # Rotação e aplicação do SBOX
-        if j % 16 == 0:
+        if j % key_size == 0:
             last_bytes = last_bytes[1:] + last_bytes[:1]
             
             last_bytes = [S_BOX[b] for b in last_bytes]
 
-            last_bytes[0] ^= RCON[j // 16 - 1]
+            last_bytes[0] ^= RCON[j // key_size - 1]
+        
+        elif key_size > 24 and j % key_size == 16:
+            last_bytes = [S_BOX[b] for b in last_bytes]
 
         for l in range(4):
-            expanded_key[j + l] = expanded_key[j - 16 + l] ^ last_bytes[l]
+            expanded_key[j + l] = expanded_key[j - key_size + l] ^ last_bytes[l]
 
     return expanded_key
 

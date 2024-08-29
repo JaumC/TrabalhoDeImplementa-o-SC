@@ -4,10 +4,10 @@ from Crypto.Cipher import AES
 
 
 
-def decryptAES(ciphertext, key, nonce, rounds=10):
+def decryptAES(ciphertext, key, nonce, rounds):
     counter = 0
     plaintextBlocks = []
-    expanded_key = keyExpansion(key)
+    expanded_key = keyExpansion(key, rounds)
 
     expanded_key_4x4 = [list(expanded_key[i:i+16]) for i in range(0, len(expanded_key), 16)]
 
