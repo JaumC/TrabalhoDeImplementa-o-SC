@@ -1,6 +1,6 @@
 from functools import reduce
 from aes_constants import INV_S_BOX
-from aes_utils import CTR, addRoundKey
+from aes_utils import addRoundKey
 from aes_utils import gmul, keyExpansion
 from Crypto.Util.Padding import unpad
 from Crypto.Cipher import AES
