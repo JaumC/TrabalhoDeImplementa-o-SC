@@ -76,7 +76,7 @@ def cipherText():
         if loop == '1':
             plaintext = text.encode('utf-8')
             plaintext = pad(plaintext, AES.block_size)
-            ciphertext = encryptAES(text, key, nonce, rounds)
+            ciphertext = encryptAES(plaintext, key, nonce, rounds)
 
             print('\nCiphertext:', ciphertext.hex())
             loop = input('\nSelecione uma opção:\n2)Decriptar\n3)Sair\nR: ')
@@ -116,44 +116,51 @@ def cipherFile():
 
     action = input('\nSelecione uma opção:\n1)Cifrar Arquivo\n2)Decifrar Arquivo\n3)Sair\nR: ')
 
-    if action == '1':
-        with open('file.txt','rb') as file:
-            plaintext = file.read()
+    while True:
+        if action == '1':
+            with open('file.txt','rb') as file:
+                plaintext = file.read()
 
-        ciphertext = encryptAES(plaintext, key, nonce, rounds)
+            ciphertext = encryptAES(plaintext, key, nonce, rounds)
 
-        with open('ciphedfile.txt', 'wb') as file:
-            file.write(ciphertext)
+            with open('ciphedfile.txt', 'wb') as file:
+                file.write(ciphertext)
 
-        print(f'Arquivo cifrado salvo!')
+            print(f'Arquivo cifrado salvo!')
 
-    elif action == '2':
-        with open('ciphedfile.txt','rb') as file:
-            ciphertext = file.read()
+        elif action == '2':
+            with open('ciphedfile.txt','rb') as file:
+                ciphertext = file.read()
 
-        plaintext = decryptAES(ciphertext, key, nonce, rounds)
+            plaintext = decryptAES(ciphertext, key, nonce, rounds)
 
-        with open('decipheredfile.txt', 'wb') as file:
-            file.write(plaintext)
+            with open('decipheredfile.txt', 'wb') as file:
+                file.write(plaintext)
 
-        print(f'Arquivo decifrado salvo!')
+            print(f'Arquivo decifrado salvo!')
 
-    elif action == '3':
-        return
-    
-    else:
-        print('Opção inválida, tente novamente.')
+        elif action == '3':
+            break
+        
+        else:
+            print('Opção inválida, tente novamente.')
 
-
+def cipherImage():
+    pass
 
 def main():
-    response = input('\nEscolha a opção:\n1)Cifração de Texto\n2)Cifração de Arquivo\nR: ')
-    if response == '1':
-        cipherText()
-    elif response == '2':
-        cipherFile()
-    else:
-        print('Opção inválida, tente novamente.')
+    while True:
+        response = input('\nEscolha a opção:\n1)Cifração de Texto.\n2)Cifração de Arquivo.\n3)Cifrar Imagem.\n4)Sair\nR: ')
+        if response == '1':
+            cipherText()
+        elif response == '2':
+            cipherFile()
+        elif response == '3':
+            cipherImage()
+        elif response == '4':
+            break
+        else:
+            print('Opção inválida, tente novamente.')
 
 
 main()

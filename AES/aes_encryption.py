@@ -1,10 +1,7 @@
 from aes_utils import keyExpansion, addRoundKey, bytes_to_state, state_to_bytes, mixColumns, shiftRows, subBytes
-from Crypto.Util.Padding import pad
-from Crypto.Cipher import AES
 
 def encryptAES(text, key, nonce, rounds):
-    plaintext = text.encode('utf-8')
-    plaintext = pad(plaintext, AES.block_size)
+    plaintext = text
 
     counter = 0
     cipherBlocks = []

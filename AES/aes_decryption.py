@@ -1,6 +1,4 @@
 from aes_utils import keyExpansion, addRoundKey, bytes_to_state, state_to_bytes, mixColumns, shiftRows, subBytes
-from Crypto.Util.Padding import unpad
-from Crypto.Cipher import AES
 
 
 
@@ -38,7 +36,5 @@ def decryptAES(ciphertext, key, nonce, rounds):
         counter += 1
 
     plaintext = b''.join(plaintextBlocks)
-    plaintext = unpad(plaintext, AES.block_size)
-    plaintext = plaintext.decode('utf-8')
   
     return plaintext
