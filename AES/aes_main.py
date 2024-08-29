@@ -118,26 +118,30 @@ def cipherFile():
 
     while True:
         if action == '1':
-            with open('file.txt','rb') as file:
+            with open('msg_file.txt','rb') as file:
                 plaintext = file.read()
-
+            
+            plaintext = pad(plaintext, AES.block_size)
             ciphertext = encryptAES(plaintext, key, nonce, rounds)
 
-            with open('ciphedfile.txt', 'wb') as file:
+            with open('ciphed_file.txt', 'wb') as file:
                 file.write(ciphertext)
 
             print(f'Arquivo cifrado salvo!')
+            action = input('\nSelecione uma opção:\n1)Cifrar Arquivo\n2)Decifrar Arquivo\n3)Sair\nR: ')
 
         elif action == '2':
-            with open('ciphedfile.txt','rb') as file:
+            with open('ciphed_file.txt','rb') as file:
                 ciphertext = file.read()
 
-            plaintext = decryptAES(ciphertext, key, nonce, rounds)
+            decrypted = decryptAES(ciphertext, key, nonce, rounds)
+            plaintext = unpad(decrypted, AES.block_size)
 
-            with open('decipheredfile.txt', 'wb') as file:
+            with open('deciphered_file.txt', 'wb') as file:
                 file.write(plaintext)
 
             print(f'Arquivo decifrado salvo!')
+            break
 
         elif action == '3':
             break
@@ -161,6 +165,5 @@ def main():
             break
         else:
             print('Opção inválida, tente novamente.')
-
 
 main()
