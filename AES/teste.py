@@ -1,4 +1,6 @@
-from functools import reduce
+from Crypto.Util.Padding import pad, unpad
+from Crypto.Cipher import AES
+import binascii
 from aes_encryption import mixColumns, shiftRows, subBytes
 from aes_utils import addRoundKey, keyExpansion
 
@@ -10,12 +12,10 @@ def state_to_bytes(state):
     """Converte uma matriz 4x4 em um bloco de bytes."""
     return bytes([item for sublist in state for item in sublist])
 
-def encryptAES(plaintext, key, nonce):
+def encryptAES(plaintext, key, nonce, rounds):
     counter = 0
     cipherBlocks = []
     expanded_key = keyExpansion(key)
-    
-    rounds = int(input('Digite a quantidade de rounds [10, 12 ou 14]: '))
 
     expanded_key_4x4 = [list(expanded_key[i:i+16]) for i in range(0, len(expanded_key), 16)]
 
@@ -92,18 +92,22 @@ def decryptAES(ciphertext, key, nonce, rounds=10):
 
 
 # Teste do código
-plaintext = bytes([0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x97, 0x34, 0x66, 0x08, 0x51, 0xe0])
-key = bytes([0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x97, 0x34, 0x66, 0x08, 0x51, 0xe0])
-nonce = b'\x00' * 12  # CTR usa nonce de 12 bytes
+text = "This is a test message for AES encryption."
+key = b'\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x97\x34\x66\x08\x51\xe0'
+nonce = b'\x01' * 12
 
-ciphertext, rounds = encryptAES(plaintext, key, nonce)
-print('\n\nCiphertext:', ciphertext, '\nRounds:', rounds)
+plaintext = text.encode('utf-8')
+plaintext = pad(plaintext, AES.block_size)
+
+ciphertext, rounds = encryptAES(text, key, nonce)
+print('\nCiphertext:', binascii.hexlify(ciphertext))
 
 decrypted = decryptAES(ciphertext, key, nonce, rounds)
-print('\nDecrypted Text:', decrypted)
+decrypted = unpad(decrypted, AES.block_size)
+print('\nDecrypted Text:', decrypted.decode('utf-8'))
 
 # Verificar se o texto descriptografado corresponde ao plaintext original
-if decrypted == plaintext:
-    print("Success! The decrypted text matches the original plaintext.")
+if decrypted.decode('utf-8') == text:
+    print("\nSuccess! The decrypted text matches the original plaintext.")
 else:
-    print("Failure! The decrypted text does not match the original plaintext.")
+    print("\nFailure! The decrypted text does not match the original plaintext.")

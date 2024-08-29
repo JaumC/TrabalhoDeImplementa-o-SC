@@ -1,5 +1,38 @@
 from aes_constants import S_BOX, RCON
 
+#Percorre o state e substitui cada valor pelo correspondente em SBOX
+def subBytes(state): 
+    for i in range(4):
+        for j in range(4):
+            state[i][j] = S_BOX[state[i][j]]
+    return state
+
+
+#Alteração da posição dos bytes nas linhas 1, 2 e 3 da matriz
+def shiftRows(state): 
+    state[1] = state[1][1:] + state[1][:1]
+    state[2] = state[2][2:] + state[2][:2]
+    state[3] = state[3][3:] + state[3][:3]
+
+    return state
+
+
+#Multiplicação das colunas da matriz no campo finito GF
+def mixColumns(state):
+    newState = [[0] * 4 for _ in range(4)]
+
+    for c in range(4):
+        newState[0][c] = gmul(0x02, state[0][c]) ^ gmul(0x03, state[1][c]) ^ state[2][c] ^ state[3][c]
+        newState[1][c] = state[0][c] ^ gmul(0x02, state[1][c]) ^ gmul(0x03, state[2][c]) ^ state[3][c]
+        newState[2][c] = state[0][c] ^ state[1][c] ^ gmul(0x02, state[2][c]) ^ gmul(0x03, state[3][c])
+        newState[3][c] = gmul(0x03, state[0][c]) ^ state[1][c] ^ state[2][c] ^ gmul(0x02, state[3][c])
+
+    for i in range(4):
+        for j in range(4):
+            state[i][j] = newState[i][j]
+
+    return newState
+
 
 #Multiplicação de dois elementos no campo finito GF
 def gmul(a, b):
@@ -55,8 +88,8 @@ def addRoundKey(state, roundKey):
     return state
 
 
-def to_hex_string(data):
-    if isinstance(data[0], list): 
-        return ' | '.join(' '.join(f'{x:02x}' for x in row) for row in data)
-    else: 
-        return ' '.join(f'{x:02x}' for x in data)
+def bytes_to_state(block):
+    return [list(block[i:i+4]) for i in range(0, len(block), 4)]
+
+def state_to_bytes(state):
+    return bytes([item for sublist in state for item in sublist])
