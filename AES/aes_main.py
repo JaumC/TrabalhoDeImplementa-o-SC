@@ -2,7 +2,9 @@
 
 from aes_encryption import encryptAES
 from aes_decryption import decryptAES
-import random
+from Crypto.Random import get_random_bytes
+from Crypto.Util.Padding import pad, unpad
+from Crypto.Cipher import AES
 
 
 def keyGen(rounds):
@@ -32,7 +34,7 @@ def keyGen(rounds):
         else:
             key = key_bytes
     else:
-        key = bytes(random.randint(0, 255) for _ in range(key_size))
+        key = get_random_bytes(key_size)
 
     print(f'\nSua chave é: {key.hex()}')
     return key
@@ -52,13 +54,14 @@ def IVGen():
         else:
             nonce = IV_bytes
     else:
-        nonce = bytes(random.randint(0, 255) for _ in range(12))
+        nonce = get_random_bytes(12)
+
 
     print(f'\nSeu nonce é: {nonce.hex()}')
     return nonce
 
 
-def main():
+def cipherText():
     text = input('\nDigite o texto a ser cifrado:\nR: ')
     rounds = int(input('\nDigite a quantidade de rounds [10, 12 ou 14]: '))
 
@@ -71,6 +74,8 @@ def main():
     while True:
 
         if loop == '1':
+            plaintext = text.encode('utf-8')
+            plaintext = pad(plaintext, AES.block_size)
             ciphertext = encryptAES(text, key, nonce, rounds)
 
             print('\nCiphertext:', ciphertext.hex())
@@ -78,6 +83,8 @@ def main():
             
         elif loop == '2':
             decrypt = decryptAES(ciphertext, key, nonce, rounds)
+            decrypt = unpad(decrypt, AES.block_size)
+            decrypt = decrypt.decode('utf-8')
             print('Decrypt:\n', decrypt)
             break
 
@@ -99,4 +106,54 @@ def main():
     else:
         print(f'\nFalhou! [ {decrypt} ] != [ {text} ]\n')
     
+
+
+def cipherFile():
+    rounds = int(input('\nDigite a quantidade de rounds [10, 12 ou 14]: '))
+
+    key = keyGen(rounds)
+    nonce = IVGen()
+
+    action = input('\nSelecione uma opção:\n1)Cifrar Arquivo\n2)Decifrar Arquivo\n3)Sair\nR: ')
+
+    if action == '1':
+        with open('file.txt','rb') as file:
+            plaintext = file.read()
+
+        ciphertext = encryptAES(plaintext, key, nonce, rounds)
+
+        with open('ciphedfile.txt', 'wb') as file:
+            file.write(ciphertext)
+
+        print(f'Arquivo cifrado salvo!')
+
+    elif action == '2':
+        with open('ciphedfile.txt','rb') as file:
+            ciphertext = file.read()
+
+        plaintext = decryptAES(ciphertext, key, nonce, rounds)
+
+        with open('decipheredfile.txt', 'wb') as file:
+            file.write(plaintext)
+
+        print(f'Arquivo decifrado salvo!')
+
+    elif action == '3':
+        return
+    
+    else:
+        print('Opção inválida, tente novamente.')
+
+
+
+def main():
+    response = input('\nEscolha a opção:\n1)Cifração de Texto\n2)Cifração de Arquivo\nR: ')
+    if response == '1':
+        cipherText()
+    elif response == '2':
+        cipherFile()
+    else:
+        print('Opção inválida, tente novamente.')
+
+
 main()
