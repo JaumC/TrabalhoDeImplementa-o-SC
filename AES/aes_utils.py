@@ -1,4 +1,6 @@
 from aes_constants import S_BOX, RCON
+from PIL import Image
+import io
 
 #Percorre o state e substitui cada valor pelo correspondente em SBOX
 def subBytes(state): 
@@ -112,3 +114,15 @@ def bytes_to_state(block):
 
 def state_to_bytes(state):
     return bytes([item for sublist in state for item in sublist])
+
+def image_to_bytes(image):
+    with Image.open(image) as img:
+        img_byte_arr = io.BytesIO()
+        img.save(img_byte_arr, format='PNG')
+        img_bytes = img_byte_arr.getvalue()
+    return img_bytes
+
+def bytes_to_image(image, path):
+    img_byte_arr = io.BytesIO(image)
+    with Image.open(img_byte_arr) as img:
+        img.save(path)

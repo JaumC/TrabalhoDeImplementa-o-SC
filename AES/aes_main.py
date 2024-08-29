@@ -1,5 +1,6 @@
 # AES-128
 
+from aes_utils import bytes_to_image, image_to_bytes
 from aes_encryption import encryptAES
 from aes_decryption import decryptAES
 from Crypto.Random import get_random_bytes
@@ -128,7 +129,7 @@ def cipherFile():
                 file.write(ciphertext)
 
             print(f'Arquivo cifrado salvo!')
-            action = input('\nSelecione uma opção:\n1)Cifrar Arquivo\n2)Decifrar Arquivo\n3)Sair\nR: ')
+            action = input('\nSelecione uma opção:\n2)Decifrar Arquivo\n3)Sair\nR: ')
 
         elif action == '2':
             with open('ciphed_file.txt','rb') as file:
@@ -150,7 +151,43 @@ def cipherFile():
             print('Opção inválida, tente novamente.')
 
 def cipherImage():
-    pass
+    rounds = int(input('\nDigite a quantidade de rounds [10, 12 ou 14]: '))
+
+    key = keyGen(rounds)
+    nonce = IVGen()
+
+    steps = input('\nSelecione uma opção:\n1)Cifrar Imagem.\n3)Sair.\nR: ')
+
+    while True:
+        if steps == '1':
+            img_bytes = image_to_bytes('./image_crypt/Selfie.jpg')
+            img_bytes = pad(img_bytes, AES.block_size)
+            encrypted_bytes = encryptAES(img_bytes, key, nonce, rounds)
+
+            with open('./image_crypt/encrypted_image.bin', 'wb') as file:
+                file.write(encrypted_bytes)
+
+            print(f'Imagem cifrada salva!')
+            steps = input('\nSelecione uma opção:\n2)Decifrar Imagem\n3)Sair\nR: ')
+
+        elif steps == '2':
+            with open('./image_crypt/encrypted_image.bin', 'rb') as file:
+                encrypted_bytes = file.read()
+
+                decrypted_bytes = decryptAES(encrypted_bytes, key, nonce, rounds)
+                decrypted_bytes = unpad(decrypted_bytes, AES.block_size)
+
+                bytes_to_image(decrypted_bytes, './image_crypt/decrypted_image.png')
+
+                print('Imagem decifrada salva!')
+                break
+
+        elif steps == '3':
+            break
+        
+        else:
+            print('Opção inválida, tente novamente.')
+
 
 def main():
     while True:
