@@ -127,9 +127,3 @@ def bytes_to_image(image, path):
     with Image.open(img_byte_arr) as img:
         img.save(path)
 
-# def bytes_to_image(byte_data, output_path, image_size=(1199, 1599, 3)):
-#     array = np.frombuffer(byte_data, dtype=np.uint8)
-#     array = array.reshape(image_size)
-#     img = Image.fromarray(array, 'RGB')
-#     img.save(output_path)
-#     print(f'Imagem salva em {output_path}')

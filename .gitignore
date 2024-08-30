@@ -3,3 +3,5 @@
 __pycache__
 *.bin
 *.png
+ciphed_file.txt
+deciphered_file.txt

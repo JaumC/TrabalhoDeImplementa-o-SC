@@ -11,13 +11,10 @@ from Crypto.Cipher import AES
 def keyGen(rounds):
     if rounds == 10:
         key_size = 16
-    
     elif rounds == 12:
         key_size = 24
-    
     elif rounds == 14:
         key_size = 32
-    
     else:
         print('\nTamanho de rounds inválido, deve ser[10, 12, 14]')
         return
@@ -25,8 +22,12 @@ def keyGen(rounds):
     keyConfirm = input('\nVocê já tem uma chave pronta?[y/n]: ')
 
     if keyConfirm == 'y':
-        key_str = input('\nInforme a chave:\nR: ')
-        key_bytes = key_str.encode('utf-8')
+        key_str = input('\nInforme a chave em hexadecimal:\nR: ')
+        try:
+            key_bytes = bytes.fromhex(key_str)
+        except ValueError:
+            print("Chave inválida. Deve estar no formato hexadecimal.")
+            return
 
         if len(key_bytes) > key_size:
             key = key_bytes[:key_size]
@@ -40,23 +41,22 @@ def keyGen(rounds):
     print(f'\nSua chave é: {key.hex()}')
     return key
 
-
 def IVGen():
     IVConfirm = input('\nVocê já tem um nonce pronto?[y/n]: ')
     
     if IVConfirm == 'y':
-        IV_str = input('\nInforme-o:\nR: ')
-        IV_bytes = IV_str.encode('utf-8')
+        IV_str = input('\nInforme-o em hexadecimal:\nR: ')
+        try:
+            nonce = bytes.fromhex(IV_str)
+        except ValueError:
+            print("Nonce inválido. Deve estar no formato hexadecimal.")
+            return
 
-        if len(IV_bytes) > 12:
-            nonce = IV_bytes[:12]
-        elif len(IV_bytes) < 12:
-            nonce = IV_bytes.ljust(12, b'\01')
-        else:
-            nonce = IV_bytes
+        if len(nonce) != 12:
+            print("Nonce deve ter exatamente 12 bytes.")
+            return
     else:
         nonce = get_random_bytes(12)
-
 
     print(f'\nSeu nonce é: {nonce.hex()}')
     return nonce
@@ -119,26 +119,26 @@ def cipherFile():
 
     while True:
         if action == '1':
-            with open('msg_file.txt','rb') as file:
+            with open('../TXTCRYPT/msg_file.txt','rb') as file:
                 plaintext = file.read()
             
             plaintext = pad(plaintext, AES.block_size)
             ciphertext = encryptAES(plaintext, key, nonce, rounds)
 
-            with open('ciphed_file.txt', 'wb') as file:
+            with open('../TXTCRYPT/ciphed_file.txt', 'wb') as file:
                 file.write(ciphertext)
 
             print(f'Arquivo cifrado salvo!')
             action = input('\nSelecione uma opção:\n2)Decifrar Arquivo\n3)Sair\nR: ')
 
         elif action == '2':
-            with open('ciphed_file.txt','rb') as file:
+            with open('../TXTCRYPT/ciphed_file.txt','rb') as file:
                 ciphertext = file.read()
 
             decrypted = decryptAES(ciphertext, key, nonce, rounds)
             plaintext = unpad(decrypted, AES.block_size)
 
-            with open('deciphered_file.txt', 'wb') as file:
+            with open('../TXTCRYPT/deciphered_file.txt', 'wb') as file:
                 file.write(plaintext)
 
             print(f'Arquivo decifrado salvo!')
@@ -152,7 +152,6 @@ def cipherFile():
 
 def cipherImage():
     print('\nPara a criptografias de imagem, será usado 14 rounds.')
-    rounds = 14
 
     key = keyGen(14)
     nonce = IVGen()
@@ -161,31 +160,28 @@ def cipherImage():
 
     while True:
         if steps == '1':
-            img_bytes = image_to_bytes('./image_crypt/Selfie.jpg')
+            img_bytes = image_to_bytes('../IMAGECRYPT/Selfie.jpg')
             img_bytes = pad(img_bytes, AES.block_size)
             
-            for rounds in[1, 5, 9, 13]:
-                encrypted_bytes = encryptAES(img_bytes, key, nonce, 14)
+            encrypted_bytes = encryptAES(img_bytes, key, nonce, 14)
 
-                with open(f'./image_crypt/ROUND-{rounds}_encryptedIMG.bin', 'wb') as file:
-                    file.write(encrypted_bytes)
+            with open(f'../IMAGECRYPT/encryptedIMG.bin', 'wb') as file:
+                file.write(encrypted_bytes)
 
-                print(f'Imagem cifrada com {rounds} rounds salva!')
-            
             steps = input('\nSelecione uma opção:\n2)Decifrar Imagem\n3)Sair\nR: ')
 
         elif steps == '2':
-            rounds = int(input('Digite o número para descriptografar a foto[1, 5, 9, 13]: '))
             
-            with open(f'./image_crypt/ROUND-{rounds}_encryptedIMG.bin', 'rb') as file:
+            with open(f'../IMAGECRYPT/encryptedIMG.bin', 'rb') as file:
                 encrypted_bytes = file.read()
 
                 decrypted_bytes = decryptAES(encrypted_bytes, key, nonce, 14)
                 decrypted_bytes = unpad(decrypted_bytes, AES.block_size)
 
-                bytes_to_image(decrypted_bytes, f'./image_crypt/ROUND-{rounds}_decryptedIMG.png')
+                bytes_to_image(decrypted_bytes, f'../IMAGECRYPT/decryptedIMG.png')
 
-                print(f'Imagem decifrada com {rounds} rounds salva!')
+                print(f'Imagem decifrada salva!')
+                break
     
 
         elif steps == '3':

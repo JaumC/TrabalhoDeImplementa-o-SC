@@ -1,7 +1,6 @@
 from aes_utils import keyExpansion, addRoundKey, bytes_to_state, state_to_bytes, mixColumns, shiftRows, subBytes
 
 
-
 def decryptAES(ciphertext, key, nonce, rounds):
     counter = 0
     plaintextBlocks = []
@@ -27,7 +26,6 @@ def decryptAES(ciphertext, key, nonce, rounds):
         state = shiftRows(state)
         state = addRoundKey(state, expanded_key_4x4[rounds])
 
-        # Concatena as colunas em uma lista
         encrypted_counter = state_to_bytes(state)
 
         plaintextBlock = bytes([b ^ c for b, c in zip(block, encrypted_counter)])

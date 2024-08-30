@@ -187,22 +187,38 @@ def verifying(pubKEY, msg, signOn64):
     return decryptHASH == msgHASH
 
 
+def print_result(is_valid, signature, alt_signature=None):
+    if is_valid:
+        print("\033[92mAssinatura válida!\033[0m")  # Verde
+    else:
+        print("\033[91mAssinatura inválida!\033[0m")  # Vermelho
+        print(f"\nAssinatura original: {signature}")
+        if alt_signature:
+            print(f"\nAssinatura alterada: {alt_signature}")
 
+def simulation(message, privKey, pubKey):
+    original_signature = signMSG(privKey, message)
+    print(f'\nAssinatura original: {original_signature}')
+
+    while True:
+        alt = input('\nDigite a alteração para a mensagem [ENTER para não alterar].\n9) Sair.\nR: ')
+
+        if alt == '9':
+            break
+
+        if alt:
+            alt_msg = alt.encode('utf-8')
+            alt_signature = signMSG(privKey, alt_msg)
+            is_valid = verifying(pubKey, alt_msg, original_signature)
+            print_result(is_valid, original_signature, alt_signature)
+        else:
+            print('\nSem alteração na mensagem.')
+
+message = input('Digite a mensagem a ser cifrada.\nR: ').encode('utf-8')
 
 pubKey, privKey = genRSA(1024)
-print("\nPublic Key:\n", pubKey)
-print()
-print("Private Key:\n", privKey)
-print()
+print(f"\nPublic Key:\n{pubKey}")
+print(f"\nPrivate Key:\n{privKey}")
 
-# Mensagem de teste
-message = 'Esta é uma mensagem secreta.'.encode('utf-8')
-print(message, '\n')
+simulation(message, privKey, pubKey)
 
-# Assinatura da mensagem
-signature = signMSG(privKey, message)
-print(f"Signature: {signature}\n")
-
-# Verificação da assinatura
-is_valid = verifying(pubKey, message, signature)
-print(f"Assinatura válida: {is_valid}")
