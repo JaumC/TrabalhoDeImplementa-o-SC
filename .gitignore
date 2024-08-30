@@ -1,3 +1,5 @@
 .venv
 .newvenv
 __pycache__
+*.bin
+*.png

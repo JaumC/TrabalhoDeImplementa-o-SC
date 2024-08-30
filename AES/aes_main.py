@@ -151,9 +151,10 @@ def cipherFile():
             print('Opção inválida, tente novamente.')
 
 def cipherImage():
-    rounds = int(input('\nDigite a quantidade de rounds [10, 12 ou 14]: '))
+    print('\nPara a criptografias de imagem, será usado 14 rounds.')
+    rounds = 14
 
-    key = keyGen(rounds)
+    key = keyGen(14)
     nonce = IVGen()
 
     steps = input('\nSelecione uma opção:\n1)Cifrar Imagem.\n3)Sair.\nR: ')
@@ -162,25 +163,30 @@ def cipherImage():
         if steps == '1':
             img_bytes = image_to_bytes('./image_crypt/Selfie.jpg')
             img_bytes = pad(img_bytes, AES.block_size)
-            encrypted_bytes = encryptAES(img_bytes, key, nonce, rounds)
+            
+            for rounds in[1, 5, 9, 13]:
+                encrypted_bytes = encryptAES(img_bytes, key, nonce, 14)
 
-            with open('./image_crypt/encrypted_image.bin', 'wb') as file:
-                file.write(encrypted_bytes)
+                with open(f'./image_crypt/ROUND-{rounds}_encryptedIMG.bin', 'wb') as file:
+                    file.write(encrypted_bytes)
 
-            print(f'Imagem cifrada salva!')
+                print(f'Imagem cifrada com {rounds} rounds salva!')
+            
             steps = input('\nSelecione uma opção:\n2)Decifrar Imagem\n3)Sair\nR: ')
 
         elif steps == '2':
-            with open('./image_crypt/encrypted_image.bin', 'rb') as file:
+            rounds = int(input('Digite o número para descriptografar a foto[1, 5, 9, 13]: '))
+            
+            with open(f'./image_crypt/ROUND-{rounds}_encryptedIMG.bin', 'rb') as file:
                 encrypted_bytes = file.read()
 
-                decrypted_bytes = decryptAES(encrypted_bytes, key, nonce, rounds)
+                decrypted_bytes = decryptAES(encrypted_bytes, key, nonce, 14)
                 decrypted_bytes = unpad(decrypted_bytes, AES.block_size)
 
-                bytes_to_image(decrypted_bytes, './image_crypt/decrypted_image.png')
+                bytes_to_image(decrypted_bytes, f'./image_crypt/ROUND-{rounds}_decryptedIMG.png')
 
-                print('Imagem decifrada salva!')
-                break
+                print(f'Imagem decifrada com {rounds} rounds salva!')
+    
 
         elif steps == '3':
             break
