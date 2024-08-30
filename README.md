@@ -1,7 +1,7 @@
 # TrabalhoDeImplementa-o-SC
 Trabalho de Implementação de Segurança Computacional
 
-## Para roda o projeto, as bibliotecas usadas estão dentro do arquivo: **requirements.txt**
+## Para rodar o projeto, as bibliotecas usadas estão dentro do arquivo: **requirements.txt**
 **Para baixar as dependencias necessárias, rode o comando no terminal:** 
 ```sh
 pip install -r requirements.txt
@@ -20,12 +20,17 @@ cd AES/
 python aes_main.py
 ```
 
-A criptogaria e descriptografia de arquivos e imagens serão adcionadas nos diretoórios **TXTCRYPT** e **IMAGECRYPT** no root(pasta principal) do projeto.
+A criptogaria e descriptografia de arquivos e imagens serão adcionadas nos diretórios **TXTCRYPT** e **IMAGECRYPT** no root(pasta principal) do projeto.
 - TXTCRYPT: Possui um **msg_file.txt**, altere a mensagem caso preferir para a criptografia.
 - IMAGECRYPT: Possui um **Selfie.txt** para a criptografia.
 
 ### A parte da implementação do RSA HASG:
-**Viaje até o diretório HASH/**
+**Se estiver em outro diretório/**
+```sh
+cd ..
+```
+
+**Então, viaje até o diretório HASH/**
 ```sh
 cd HASH/
 ```
