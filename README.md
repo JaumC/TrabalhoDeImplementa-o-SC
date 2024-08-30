@@ -25,7 +25,7 @@ A criptogaria e descriptografia de arquivos e imagens serão adcionadas nos dire
 - IMAGECRYPT: Possui um **Selfie.txt** para a criptografia.
 
 ### A parte da implementação do RSA HASG:
-**Se estiver em outro diretório/**
+**Se estiver em outro diretório**
 ```sh
 cd ..
 ```
