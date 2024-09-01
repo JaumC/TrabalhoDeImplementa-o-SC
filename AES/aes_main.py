@@ -4,9 +4,6 @@ from aes_utils import bytes_to_image, image_to_bytes
 from aes_encryption import encryptAES
 from aes_decryption import decryptAES
 from Crypto.Random import get_random_bytes
-from Crypto.Util.Padding import pad, unpad
-from Crypto.Cipher import AES
-
 
 def keyGen(rounds):
     if rounds == 10:
@@ -76,7 +73,6 @@ def cipherText():
 
         if loop == '1':
             plaintext = text.encode('utf-8')
-            plaintext = pad(plaintext, AES.block_size)
             ciphertext = encryptAES(plaintext, key, nonce, rounds)
 
             print('\nCiphertext:', ciphertext.hex())
@@ -84,7 +80,6 @@ def cipherText():
             
         elif loop == '2':
             decrypt = decryptAES(ciphertext, key, nonce, rounds)
-            decrypt = unpad(decrypt, AES.block_size)
             decrypt = decrypt.decode('utf-8')
             print('Decrypt:\n', decrypt)
             break
@@ -122,13 +117,12 @@ def cipherFile():
             with open('../TXTCRYPT/msg_file.txt','rb') as file:
                 plaintext = file.read()
             
-            plaintext = pad(plaintext, AES.block_size)
             ciphertext = encryptAES(plaintext, key, nonce, rounds)
 
             with open('../TXTCRYPT/ciphed_file.txt', 'wb') as file:
                 file.write(ciphertext)
 
-            print(f'Arquivo cifrado salvo!')
+            print(f'Arquivo cifrado salvo em TXTCRYPT/')
             action = input('\nSelecione uma opção:\n2)Decifrar Arquivo\n3)Sair\nR: ')
 
         elif action == '2':
@@ -136,12 +130,11 @@ def cipherFile():
                 ciphertext = file.read()
 
             decrypted = decryptAES(ciphertext, key, nonce, rounds)
-            plaintext = unpad(decrypted, AES.block_size)
 
             with open('../TXTCRYPT/deciphered_file.txt', 'wb') as file:
-                file.write(plaintext)
+                file.write(decrypted)
 
-            print(f'Arquivo decifrado salvo!')
+            print(f'Arquivo decifrado salvo em TXTCRYPT/')
             break
 
         elif action == '3':
@@ -161,13 +154,13 @@ def cipherImage():
     while True:
         if steps == '1':
             img_bytes = image_to_bytes('../IMAGECRYPT/Selfie.jpg')
-            img_bytes = pad(img_bytes, AES.block_size)
             
             encrypted_bytes = encryptAES(img_bytes, key, nonce, 14)
 
             with open(f'../IMAGECRYPT/encryptedIMG.bin', 'wb') as file:
                 file.write(encrypted_bytes)
 
+            print(f'Imagem cifrada salva em IMAGECRYPT/')
             steps = input('\nSelecione uma opção:\n2)Decifrar Imagem\n3)Sair\nR: ')
 
         elif steps == '2':
@@ -176,11 +169,10 @@ def cipherImage():
                 encrypted_bytes = file.read()
 
                 decrypted_bytes = decryptAES(encrypted_bytes, key, nonce, 14)
-                decrypted_bytes = unpad(decrypted_bytes, AES.block_size)
 
                 bytes_to_image(decrypted_bytes, f'../IMAGECRYPT/decryptedIMG.png')
 
-                print(f'Imagem decifrada salva!')
+                print(f'Imagem decifrada salva em IMAGECRYPT/')
                 break
     
 
