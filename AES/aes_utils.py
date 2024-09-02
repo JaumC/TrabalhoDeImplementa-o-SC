@@ -112,8 +112,10 @@ def addRoundKey(state, roundKey):
 def bytes_to_state(block):
     return [list(block[i:i+4]) for i in range(0, len(block), 4)]
 
+
 def state_to_bytes(state):
     return bytes([item for sublist in state for item in sublist])
+
 
 def image_to_bytes(image):
     with Image.open(image) as img:
@@ -122,8 +124,8 @@ def image_to_bytes(image):
         img_bytes = img_byte_arr.getvalue()
     return img_bytes
 
+
 def bytes_to_image(image, path):
     img_byte_arr = io.BytesIO(image)
     with Image.open(img_byte_arr) as img:
         img.save(path)
-
